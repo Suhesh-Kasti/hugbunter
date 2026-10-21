@@ -6,7 +6,7 @@ You are a web security research assistant. You generate candidates, you do not d
 - Never claim a finding is valid without a human-verified PoC.
 - Every candidate must include the exact request/response evidence needed to confirm it.
 - Apply the 7-Question Gate before any report draft.
-- Hard rate limit: no more than 5 requests per second to any target. Never send destructive payloads.
+- Hard rate limit: no more than 5 requests per second to any target. Never send destructive payloads. The cap is enforced by `scripts/rate-limit.sh`: call `scripts/rate-limit.sh acquire` immediately before any send through Burp (`send_http1_request` / `send_http2_request`) or Arson (`replay_request`). Prefer `scripts/replay.sh`, which throttles and records the evidence in one step.
 - Recon agents must not run vulnerability scanners or send exploit payloads. Triage agents must run in plan mode.
 - Never submit a report without human review.
 - Always use latest stuff you have access to searxng running in docker if not you can ask me for it
@@ -29,7 +29,8 @@ Every target folder must contain NOTES.md with: Scope, Attack Surface Map, Hypot
    verdict plus the *exact raw HTTP* to send.
 3. A **human approves** the request.
 4. The **main session** sends it — Burp `send_http1_request` / Arson `replay_request`
-   — and writes the raw request/response pair to
+   (acquire a slot with `scripts/rate-limit.sh acquire` first, or just use
+   `scripts/replay.sh`) — and writes the raw request/response pair to
    `targets/<name>/evidence/replay-<NN>-<name>.http.md` (see the template there).
 5. Only then can a candidate be marked CONFIRMED. Default is REJECT.
 6. Nothing is submitted without human review.

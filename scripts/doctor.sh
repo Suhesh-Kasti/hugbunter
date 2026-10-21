@@ -144,6 +144,11 @@ else
   bad "scripts/rate-limit.sh missing"
 fi
 if [ -x scripts/replay.sh ]; then ok "scripts/replay.sh present (throttled send + evidence)"; else bad "scripts/replay.sh missing"; fi
+if grep -q "rate-limit.sh acquire" AGENTS.md; then
+  ok "AGENTS.md mandates acquire before MCP sends"
+else
+  bad "AGENTS.md does not mandate the throttle before MCP sends"
+fi
 
 hdr "Onboarding"
 if [ -f .commandcode/skills/hunt-onboarding/SKILL.md ]; then ok "hunt-onboarding skill file present"; else bad "hunt-onboarding skill missing"; fi
