@@ -1,52 +1,52 @@
 # BugHunt
 
-This is my working folder for bug bounty hunting. I set it up so that CommandCode
-(and whatever model I'm running) does the boring parts — recon, mapping, keeping
-notes, drafting reports — while I stay the one who actually decides if something
-is a real bug.
+This is my working folder for bug bounty hunting. I set it up so CommandCode
+(and whatever model I'm running) handles the boring parts: recon, mapping,
+keeping notes, drafting reports. I stay the one who decides whether something is
+actually a bug.
 
-The whole thing is built around one rule: **the machine is not allowed to call
-something a finding.** It can propose. Only a request I actually sent and a
-response I actually saw make a candidate real.
+Everything here hangs off one rule. **The machine does not get to call something
+a finding.** It can propose. Only a request I really sent and a response I really
+saw makes a candidate real.
 
-Nothing here talks to a target unless I point it at one first.
+Nothing in here talks to a target unless I point it at one first.
 
 ---
 
 ## What's in here
 
-- `AGENTS.md` — the rules and the workflow. CommandCode reads this automatically
-  when I work in this folder, so it's basically my standing instructions.
-- `.commandcode/agents/` — three subagents: `recon-agent`, `triage-agent`,
+- `AGENTS.md`: the rules and the workflow. CommandCode reads this automatically
+  when I work in this folder, so it's my standing instructions.
+- `.commandcode/agents/`: three subagents, `recon-agent`, `triage-agent` and
   `report-agent`. Each one has a narrow job and a narrow set of tools.
-- `.commandcode/skills/` — the skill packs (claude-bughunter + bug-reaper).
-  84 skills total, 12 disabled because they're for targets I'm not doing
-  (mobile, vSphere, M365, crypto). They still have every web/API class I need.
-- `.mcp.json` — the MCP servers (Arson, Burp, Playwright). Committed on purpose
-  so a fresh clone works. No secrets in it, just localhost URLs.
-- `targets/` — one folder per target. `targets/_template/` is the starting point.
-- `intel/disclosed-reports/` — public HackerOne reports pulled down so I can
-  study real bugs in the classes I'm hunting.
-- `scripts/` — setup, the doctor, the report fetcher, and the MCP launchers.
+- `.commandcode/skills/`: the skill packs (claude-bughunter + bug-reaper). 84
+  skills total, 12 disabled because they're for stuff I'm not doing (mobile,
+  vSphere, M365, crypto). Every web and API class I need is still in there.
+- `.mcp.json`: the MCP servers (Arson, Burp, Playwright). Committed on purpose so
+  a fresh clone works. No secrets in it, only localhost URLs.
+- `targets/`: one folder per target. `targets/_template/` is the starting point.
+- `intel/disclosed-reports/`: public HackerOne reports I pulled down to study
+  real bugs in the classes I'm hunting.
+- `scripts/`: setup, the doctor, the report fetcher, and the MCP launchers.
 
 ---
 
 ## What has to be running
 
-This isn't a self-contained thing — it plugs into a few local services.
+This isn't self-contained. It plugs into a few local services.
 
-1. **Arson Framework** (Docker). Should be listening on `http://localhost:3001`
-   for the MCP server, and the web UI on `:80`. This is my recon engine —
-   subfinder, httpx, katana, the query API for everything it has found.
-2. **Burp Suite Pro with the MCP extension**. I enable the MCP server in Burp's
-   `MCP` tab and it comes up on `http://127.0.0.1:9876`. This is my repeater —
-   every request I actually send by hand goes through here.
-3. **SearXNG** (Docker) on `http://localhost:5343`. For OSINT and for pulling
-   context on a target. I have JSON output enabled in `settings.yml` so scripts
-   can use it too, not just the browser.
-4. **CommandCode** — `cmd`, version 1.84+.
+1. **Arson Framework** in Docker. Should be listening on `http://localhost:3001`
+   for the MCP server, with the web UI on `:80`. This is my recon engine:
+   subfinder, httpx, katana, and the query API for everything it has found.
+2. **Burp Suite Pro with the MCP extension.** I turn the MCP server on in Burp's
+   `MCP` tab and it comes up on `http://127.0.0.1:9876`. This is my repeater.
+   Every request I send by hand goes through it.
+3. **SearXNG** in Docker on `http://localhost:5343`. For OSINT and for pulling
+   context on a target. JSON output is enabled in `settings.yml` so scripts can
+   hit it too, not just the browser.
+4. **CommandCode**, `cmd` 1.84 or newer.
 
-If Arson, Burp or SearXNG aren't up, `doctor.sh` will tell me straight away.
+If Arson, Burp or SearXNG aren't up, `doctor.sh` tells me straight away.
 
 ---
 
@@ -63,14 +63,14 @@ cd ~/Study/BugHunt
 ./scripts/setup.sh
 ```
 
-That does three things: installs `supergateway` (needed to talk to Arson and
-Burp, which only speak SSE over HTTP), builds the Playwright virtualenv with
+It does three things. Installs `supergateway`, which is needed to talk to Arson
+and Burp (they only speak SSE over HTTP). Builds the Playwright virtualenv with
 `uv` and downloads Chromium. The venv lives in `mcp/playwright/.venv/` and is
-gitignored, so it's always rebuilt, never committed. Chromium goes to
+gitignored, so it gets rebuilt rather than committed. Chromium goes to
 `~/.cache/ms-playwright`, also outside the repo.
 
-**2. Start the local services** (Arson stack, Burp with MCP on, SearXNG) if they
-aren't already running.
+**2. Start the local services** if they aren't already running. That's the Arson
+stack, Burp with MCP on, and SearXNG.
 
 **3. Check everything is wired.**
 
@@ -78,10 +78,10 @@ aren't already running.
 ./scripts/doctor.sh
 ```
 
-It should end with `20 passed, 0 failed`. Every line tells me what it checked.
-If something fails, the message usually says what to do — e.g. "run setup.sh",
-or "enable json in searxng settings.yml". Run this before any session where I
-care about the result.
+It should end with `20 passed, 0 failed`. Every line says what it checked. If
+something fails the message usually tells me what to do, like "run setup.sh" or
+"enable json in searxng settings.yml". I run this before any session where the
+result matters.
 
 **4. Start hunting.**
 
@@ -90,13 +90,13 @@ cmd
 ```
 
 CommandCode loads `AGENTS.md`, the three agents, the skills and the MCP servers.
-First message I send is usually just "let's hunt on <target>".
+My first message is usually just "let's hunt on <target>".
 
 ---
 
 ## How I actually hunt
 
-This is the loop. It's the same every time, which is the point.
+Same loop every time, which is the point.
 
 **1. Set up the target folder.**
 
@@ -105,24 +105,22 @@ This is the loop. It's the same every time, which is the point.
 ```
 
 Then I open `targets/acme/NOTES.md` and fill in the top before anything else:
-what's in scope, what's out, and what the program's rules are — specifically
+what's in scope, what's out, and what the program's rules are. Specifically,
 whether they allow automated scanning and AI help. If I can't answer that from
 the program page, I don't start. That file is the contract for the engagement.
 
-**2. Recon.** I ask for the `recon-agent`. It reads the scope from NOTES.md, uses
-Arson to pull subdomains, live hosts, endpoints, tech, and writes:
+**2. Recon.** I ask for `recon-agent`. It reads the scope from NOTES.md, uses
+Arson to pull subdomains, live hosts, endpoints and tech, then writes:
 
-- `targets/acme/surface.md` — the attack surface as a table
-- hypotheses appended to NOTES.md, each with "what would prove or kill this"
+- `targets/acme/surface.md`, the attack surface as a table
+- hypotheses into NOTES.md, each one with "what would prove or kill this"
 
-The recon agent has no repeater and no browser. It maps, it doesn't touch.
+The recon agent has no repeater and no browser. It maps. It doesn't touch.
 
 **3. Triage.** This is where `triage-agent` comes in. It's deliberately locked in
-plan mode, which means it *cannot send requests*. That's not a limitation I
-worked around, it's the design — I don't want an agent firing payloads at
-someone's production site on its own.
-
-So what it gives me back is a verdict plus the exact raw request to send:
+plan mode, so it *cannot send requests*. That isn't a limitation I worked around,
+it's the design. I don't want an agent firing payloads at someone's production
+site on its own. What it hands back is a verdict plus the exact raw request:
 
 ```http
 GET /api/orders/1002 HTTP/1.1
@@ -132,93 +130,94 @@ Authorization: Bearer <my token>
 
 **4. I approve it, then it gets sent.** Once I say go, the request goes out
 through Burp (`send_http1_request`) or Arson's repeater, and the raw
-request/response pair gets written to
+request/response pair lands in
 `targets/acme/evidence/replay-01-<name>.http.md`.
 
-If I want to watch it in a real browser instead — DOM XSS, anything client-side —
-Playwright is there. The `browser_console` tool returns captured alerts and
+If I'd rather watch it happen in a real browser, say for DOM XSS or anything
+client-side, Playwright is there. `browser_console` returns captured alerts and
 console output, so I can prove `alert(document.domain)` fired without sitting
-there watching a screen.
+there staring at a screen.
 
-**5. Verdict.** CONFIRMED, NEEDS MORE EVIDENCE, or REJECTED — written into
-FINDINGS.md. Default is REJECT. If it's confirmed, the evidence folder has the
+**5. Verdict.** CONFIRMED, NEEDS MORE EVIDENCE, or REJECTED, written into
+FINDINGS.md. Default is REJECT. If it's confirmed, the evidence folder holds the
 proof.
 
-**6. Report.** `report-agent` drafts `REPORT.md` from the evidence only. It's
-told to invent nothing, and to stamp "EVIDENCE MISSING — DO NOT SUBMIT" on
-anything it can't back up.
+**6. Report.** `report-agent` drafts `REPORT.md` from the evidence only. It's told
+to invent nothing and to stamp "EVIDENCE MISSING - DO NOT SUBMIT" on anything it
+can't back up.
 
 Then **I** read it, check it against the program's rules, and I'm the one who
-submits it. Nothing gets submitted by the agent.
+submits. Nothing gets submitted by the agent.
 
 ---
 
 ## The two rules I don't break
 
 **No finding without a replay.** If I can't show the request and the response,
-it's a suspicion, not a bug. This is the whole reason the triage agent is in
+it's a suspicion, not a bug. That's the whole reason the triage agent sits in
 plan mode.
 
-**Nothing goes out faster than 5 requests/second**, and no destructive payloads —
-no `DROP TABLE`, no deleting things to "prove" it works. If a bug needs something
-destructive to demonstrate, I write it up as theory and let the program decide.
-Getting kicked out of a program costs more than any single report is worth.
+**Nothing goes out faster than 5 requests/second**, and no destructive payloads.
+No `DROP TABLE`, no deleting things to "prove" it works. If a bug needs
+something destructive to demonstrate, I write it up as theory and let the
+program decide. Getting kicked out of a program costs more than any single
+report is worth.
 
 ---
 
 ## MCP servers, and why Arson is trimmed
 
-Three servers, each scoped to how I actually use them:
+Three servers, each scoped to how I use them:
 
 | Server | Tools exposed | What it's for |
 |---|---|---|
-| `arson-framework` | 51 of 157 | recon + queries + the repeater |
+| `arson-framework` | 51 of 157 | recon, queries, the repeater |
 | `burp` | 27 | manual replay, Collaborator, proxy history |
 | `playwright` | 11 | browser proof capture (alerts, console, DOM) |
 
-Arson ships 157 tools. I expose 51. The framework itself is untouched — all 157
+Arson ships 157 tools. I expose 51. The framework itself is untouched. All 157
 still work in Arson's own web UI. I only narrowed what the model sees, for two
-reasons:
+reasons.
 
-1. **Cost.** Tool definitions are the biggest fixed cost in every request.
-   157 schemas is about 420 KB (~105k tokens) every single time. The 51 I keep
-   is about 60 KB (~15k). Caching helps, but a cold session or any change pays
-   full price. 86% off for free.
-2. **It stops the agent doing something I don't want.** Most of the tools I left
-   out are per-class exploiters (`manage_sqli`, `manage_xss`, `manage_ssrf`…) and
+1. **Cost.** Tool definitions are the biggest fixed cost in every request. All
+   157 schemas is about 420 KB (~105k tokens) every single time. The 51 I keep is
+   about 60 KB (~15k). Caching helps, but a cold session or any change pays full
+   price. That's 86% off for free.
+2. **It stops the agent doing things I don't want.** Most of what I left out is
+   per-class exploiters (`manage_sqli`, `manage_xss`, `manage_ssrf`...) and the
    workflow runners that pull in nuclei and ffuf. Recon agents are supposed to
    map, not scan. Not exposing those tools enforces that instead of just asking
    the model to behave.
 
-I checked the trim doesn't cost me anything the agents use: they reference 48
-tools, 51 are exposed, none missing. `doctor.sh` checks it.
+I checked the trim costs me nothing the agents use. They reference 48 tools, 51
+are exposed, none missing, and `doctor.sh` checks that.
 
-If I need one back, it's a one-line edit to `.mcp.json` — add
-`"--tools", "manage_graphql"` to the args — and restart the session. The full
-list of 157 names is in `mcp/README.md`. For one-off stuff I just use Arson's
-web UI, which never lost anything.
+If I need one back it's a one-line edit to `.mcp.json`, add
+`"--tools", "manage_graphql"` to the args, and restart the session. The full list
+of 157 names is in `mcp/README.md`. For one-off things I just use Arson's web UI,
+which never lost anything.
 
 ---
 
 ## Skills
 
-`claude-bughunter` (83 skills) and `bug-reaper` (1). They're normal Agent Skills
-files, so `/skill:bb-methodology`, `/skill:hunt-xss`, `/skill:triage-validation`
-all work, and the model auto-picks them by topic.
+`claude-bughunter` is 83 skills, `bug-reaper` is 1. They're normal Agent Skills
+files, so `/skill:bb-methodology`, `/skill:hunt-xss` and
+`/skill:triage-validation` all work, and the model auto-picks them by topic.
 
-12 are disabled in `.commandcode/settings.json` — the mobile, enterprise and
-crypto ones. If I ever hit a target that needs one, I delete its line from that
-file (or toggle it in `/skills`). Note that `cmd skills list` still shows all 84
-as "installed"; disabled just means the model doesn't see them.
+12 are disabled in `.commandcode/settings.json`: the mobile, enterprise and
+crypto ones. If a target ever needs one I delete its line from that file, or
+toggle it in `/skills`. Worth knowing that `cmd skills list` still shows all 84
+as "installed". Disabled just means the model doesn't see them.
 
 ---
 
 ## The intel folder
 
-`intel/disclosed-reports/` is public HackerOne disclosures saved as markdown —
-metadata, a summary snippet and a "Learning Notes" section for me to fill in
-while reading. It's the cheapest way to learn a bug class: read how ten real
-people found it before I try it myself.
+`intel/disclosed-reports/` holds public HackerOne disclosures saved as markdown.
+Metadata, a summary snippet, and a "Learning Notes" section for me to fill in
+while reading. It's the cheapest way to learn a bug class. Read how ten real
+people found it before trying it myself.
 
 Refresh or add to it with:
 
@@ -228,13 +227,15 @@ Refresh or add to it with:
 ./scripts/fetch-disclosed-reports.sh --sort latest --limit 40   # what's new
 ```
 
-It's idempotent — re-running skips what's already there. Full report bodies need
-my HackerOne session cookie (`H1_COOKIE=... ./scripts/...`); without it I get the
+It's idempotent, so re-running skips what's already there. Getting the full
+report bodies needs my HackerOne session cookie
+(`H1_COOKIE=... ./scripts/fetch-disclosed-reports.sh`). Without it I get the
 public summary and click through to the report.
 
-No Intigriti or Bugcrowd feed, on purpose: Intigriti has no public disclosure API
-at all and Bugcrowd's only public feed is metadata with no titles or classes.
-Worth knowing so I don't go looking for a scraper that doesn't exist.
+There's no Intigriti or Bugcrowd feed, and that's on purpose. Intigriti has no
+public disclosure API at all, and Bugcrowd's only public feed is metadata with no
+titles or vulnerability classes. Worth knowing so I don't waste a day looking for
+a scraper that doesn't exist.
 
 ---
 
@@ -263,9 +264,9 @@ targets/
 intel/disclosed-reports/  HackerOne writeups for study
 ```
 
-`skills/` (the upstream clones I copied the skills out of) is gitignored — it's
-7 MB of docs and history I don't need in every clone. The skills themselves are
-in `.commandcode/skills/`.
+`skills/` (the upstream clones I copied the skills out of) is gitignored. It's
+about 7 MB of docs and git history I don't need in every clone. The skills
+themselves live in `.commandcode/skills/`.
 
 ---
 
@@ -273,29 +274,29 @@ in `.commandcode/skills/`.
 
 - **`doctor.sh` says a server exposes 0 tools.** That MCP server didn't start.
   Check the service is up, then look at `/mcp` inside a session for the error.
-- **Chromium won't launch.** run
+- **Chromium won't launch.** Run
   `sudo ./mcp/playwright/.venv/bin/playwright install-deps chromium` once. It
-  launched fine on CachyOS, but it's the usual culprit on a bare machine.
-- **Arson/Burp tools missing entirely.** `supergateway` isn't installed —
-  `./scripts/setup.sh`. If it's installed somewhere odd, `scripts/mcp-bridge.sh`
-  finds it in `.tools/`, `~/.local/bin`, or on `PATH`, and falls back to `npx`.
-- **A skill isn't showing up.** `cmd skills list --debug` says why — usually a
-  description over 1024 chars, or the folder name not matching the `name:` field.
-- **SearXNG returns 403 on `?format=json`.** JSON output isn't enabled in
-  `settings.yml` — add `json` to `search.formats` and restart the container.
+  launched fine on CachyOS, but this is the usual culprit on a bare machine.
+- **Arson or Burp tools missing entirely.** `supergateway` isn't installed, so
+  run `./scripts/setup.sh`. If it's in some odd place, `scripts/mcp-bridge.sh`
+  looks in `.tools/`, `~/.local/bin`, then `PATH`, and falls back to `npx`.
+- **A skill isn't showing up.** `cmd skills list --debug` says why. Usually a
+  description over 1024 characters, or the folder name not matching `name:`.
+- **SearXNG gives a 403 on `?format=json`.** JSON output isn't enabled. Add `json`
+  to `search.formats` in `settings.yml` and restart the container.
 
 ---
 
 ## Things I still want to add
 
 - A wrapper that enforces the 5 req/s ceiling mechanically instead of trusting
-  the instructions.
-- A second identity helper for IDOR work, so every access-control test has an
-  A and a B account by default.
+  the instructions to hold.
+- A second-identity helper for IDOR work, so every access-control test has an A
+  and a B account by default.
 - Somewhere to keep per-class notes that builds up as I work through the intel
   reports.
 
 ---
 
 Authorized testing only. Everything in here assumes the target is covered by a
-program's scope or I have written permission. If it isn't, the answer is no.
+program's scope or that I have written permission. If it isn't, the answer is no.
