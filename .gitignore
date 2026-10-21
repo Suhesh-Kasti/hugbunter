@@ -1,0 +1,80 @@
+# =============================================================================
+# Bug Hunt workspace — .gitignore
+# =============================================================================
+# Committed on purpose:
+#   AGENTS.md
+#   .commandcode/agents/            (recon/triage/report subagents)
+#   .commandcode/skills/            (real skill folders, NOT the staging clones)
+#   .commandcode/settings.json      (disabled-skill list)
+#   .mcp.json                       (trimmed MCP config; no secrets — localhost only)
+#   scripts/
+#   targets/_template/
+#   intel/disclosed-reports/        (small; third-party content, private repo only)
+# =============================================================================
+
+# --- Upstream skill clones ----------------------------------------------------
+# These are staging clones (they also contain nested .git dirs). The copies
+# CommandCode actually loads live in .commandcode/skills/ and are committed.
+# If you would rather vendor the upstream repos instead, delete this rule and
+# remove the nested .git dirs first:  find skills -name .git -type d -exec rm -rf {} +
+/skills/
+
+# --- OS / editor junk ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+*.swo
+.idea/
+.obsidian/
+
+# --- Secrets / local-only config ---------------------------------------------
+.env
+.env.*
+*.pem
+*.key
+*-credentials.json
+.commandcode/settings.local.json
+scripts/.identifier-denylist.local
+
+# --- Target material ----------------------------------------------------------
+# Commit notes/surface/findings (they carry the reasoning and the repro steps).
+# Keep raw evidence text, but never commit large binaries or Burp project files.
+targets/*/evidence/*.png
+targets/*/evidence/*.jpg
+targets/*/evidence/*.jpeg
+targets/*/evidence/*.gif
+targets/*/evidence/*.mp4
+targets/*/evidence/*.mov
+targets/*/evidence/*.pdf
+targets/*/evidence/*.har
+targets/*/evidence/*.zip
+*.burp
+*.har
+
+# --- Python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# --- Node ---------------------------------------------------------------------
+node_modules/
+
+# --- Logs / scratch -----------------------------------------------------------
+*.log
+*.tmp
+recon/
+
+# --- Local-only state ---------------------------------------------------------
+# Taste is rewritten by the learning system every session (noisy diffs).
+.commandcode/taste/
+
+# Repo-local tooling: uv venv + optional local node fallback for the MCP bridge.
+mcp/playwright/.venv/
+.tools/

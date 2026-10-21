@@ -1,0 +1,16 @@
+{
+  "disabledSkills": [
+    "apk-redteam-pipeline",
+    "ios-redteam-pipeline",
+    "vmware-vcenter-attack",
+    "hunt-sharepoint",
+    "m365-entra-attack",
+    "okta-attack",
+    "enterprise-vpn-attack",
+    "meme-coin-audit",
+    "web3-audit",
+    "mid-engagement-ir-detection",
+    "redteam-report-template",
+    "hunt-ntlm-info"
+  ]
+}
