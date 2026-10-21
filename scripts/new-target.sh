@@ -27,7 +27,11 @@ fi
 mkdir -p "$dest/evidence"
 cp "$HERE/targets/_template/NOTES.md" "$dest/NOTES.md"
 cp "$HERE/targets/_template/evidence/README.md" "$dest/evidence/README.md"
+if [ -f "$HERE/templates/TARGET.md" ]; then
+  cp "$HERE/templates/TARGET.md" "$dest/TARGET.md"
+fi
 
 echo "created targets/$name/"
 echo "next: edit targets/$name/NOTES.md — scope, out-of-scope, and program rules"
 echo "      (confirm automated testing and AI assistance are allowed before recon)"
+echo "      or paste the program policy text into the chat and let /skill:hunt-onboarding fill it in"

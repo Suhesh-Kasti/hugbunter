@@ -2,7 +2,7 @@
 name: triage-agent
 description: Careful validation of candidates produced by recon. Reads evidence, applies the 7-Question Gate, rejects false positives, sends requests only through the Arson repeater in plan mode. Use this agent when you have a candidate and need to validate it or draft a report.
 model: deepseek/deepseek-v4.1-flash
-reasoningEffort: high
+reasoningEffort: max
 tools: read_file, write_file, grep, mcp__arson-framework__replay_request, mcp__arson-framework__replay_auth_flow, mcp__arson-framework__replay_auth_flow_step, mcp__arson-framework__get_scope_overview, mcp__arson-framework__get_scope_stats, mcp__arson-framework__hackerone_scope, mcp__arson-framework__list_targets, mcp__arson-framework__get_target_summary, mcp__arson-framework__query_subdomains, mcp__arson-framework__query_live_servers, mcp__arson-framework__query_endpoints, mcp__arson-framework__query_technologies, mcp__arson-framework__query_target_urls, mcp__arson-framework__query_parameters, mcp__arson-framework__query_dns_records, mcp__arson-framework__query_discovered_ips, mcp__arson-framework__query_cloud_assets, mcp__arson-framework__query_company_domains, mcp__arson-framework__query_consolidated_endpoints, mcp__arson-framework__query_attack_surface_assets, mcp__arson-framework__get_scan_results, mcp__arson-framework__get_scan_hosts, mcp__arson-framework__get_discovered_endpoints, mcp__arson-framework__get_attack_surface, mcp__arson-framework__get_attack_playbook, mcp__arson-framework__get_methodology, mcp__arson-framework__get_tool_guidance, mcp__arson-framework__read_knowledge_file, mcp__arson-framework__search_knowledge_base, mcp__arson-framework__whats_next
 permissionMode: plan
 maxTurns: 100

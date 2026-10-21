@@ -1,4 +1,4 @@
-# BugHunt
+# HugBunter
 
 This is my working folder for bug bounty hunting. I set it up so CommandCode
 (and whatever model I'm running) handles the boring parts: recon, mapping,
@@ -298,5 +298,3 @@ themselves live in `.commandcode/skills/`.
 
 ---
 
-Authorized testing only. Everything in here assumes the target is covered by a
-program's scope or that I have written permission. If it isn't, the answer is no.

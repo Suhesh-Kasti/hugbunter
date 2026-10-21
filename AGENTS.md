@@ -34,9 +34,14 @@ Every target folder must contain NOTES.md with: Scope, Attack Surface Map, Hypot
 5. Only then can a candidate be marked CONFIRMED. Default is REJECT.
 6. Nothing is submitted without human review.
 
+## Onboarding a program
+When the user pastes raw program policy text, automatically extract the scope and rules, run `scripts/new-target.sh` to scaffold the folder, and populate `targets/<name>/TARGET.md` with the extracted rules. Then, immediately ask the user for permission to launch the recon-agent.
+
+Follow the `hunt-onboarding` skill for the extraction rules. Two things it insists on: anything the policy does not state is `UNKNOWN`, never an assumed yes, and `UNKNOWN` for AI assistance or automated testing blocks recon until the user confirms.
+
 ## Skills
 
-Two imported playbook packs are available as project skills (see `skills/` and `.commandcode/skills/`).
+Two imported playbook packs plus one local workflow skill. Project skills live in `.commandcode/skills/`.
 
 ### claude-bughunter (83 skills loaded)
 Imported from `elementalsouls/Claude-BugHunter`. Covers recon/OSINT, per-vulnerability-class hunting, platform reporting, evidence hygiene, and validation gates. Start with:
@@ -52,6 +57,10 @@ Imported from `elementalsouls/Claude-BugHunter`. Covers recon/OSINT, per-vulnera
 Imported from `shaniidev/bug-reaper`. A four-phase (recon → hunt → validate → report) methodology with references for platform rules, severity, WAF bypass, chaining, and false-positive elimination:
 - `/skill:bug-reaper`
 
+### hunt-onboarding (local)
+Written for this workspace. Turns pasted program policy text into a target folder and a `TARGET.md` of extracted rules. Enforces the two safety rules: unstated means `UNKNOWN`, and `UNKNOWN` for AI or automated testing blocks recon:
+- `/skill:hunt-onboarding`
+
 ### Tool-name mapping (Claude → CommandCode)
 Imported material was written for Claude Code. When following it, translate:
 - `CLAUDE.md` → `AGENTS.md`
@@ -59,7 +68,7 @@ Imported material was written for Claude Code. When following it, translate:
 - `WebSearch` → `web_search` (or SearXNG at `http://localhost:5343`)
 - `mcp__burp__*` → the tools exposed by the configured Burp MCP server (raw names as shown in `/mcp`)
 - Claude browser tools → `mcp__playwright__*` (`browser_navigate`, `browser_get_html`, `browser_console` for alert/console proof, `browser_network`, `browser_evaluate`)
-- `claude-sonnet-*` / `claude-opus-*` → `deepseek/deepseek-v4.1-flash` (or `deepseek/deepseek-v4-pro` for triage)
+- `claude-sonnet-*` / `claude-opus-*` → `deepseek/deepseek-v4.1-flash` (all three agents; triage runs it at `max` effort, recon at `low`)
 
 ### Agent workflow
 - `recon-agent` — maps attack surface only; no scanners, no exploit payloads.

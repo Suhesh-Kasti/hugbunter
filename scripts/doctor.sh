@@ -107,13 +107,57 @@ else
 fi
 
 hdr "Agents"
-for a in recon-agent triage-agent report-agent; do
-  if [ -f ".commandcode/agents/$a.md" ]; then
-    if grep -qE '^model:\s*deepseek/' ".commandcode/agents/$a.md"; then ok "$a present (deepseek model pinned)"; else bad "$a present but model not pinned to deepseek"; fi
+check_agent() {  # name expected-model-substring expected-effort
+  local a="$1" want="$2" want_effort="$3"
+  if [ ! -f ".commandcode/agents/$a.md" ]; then bad "$a missing"; return; fi
+  local model effort
+  model=$(grep -m1 '^model:' ".commandcode/agents/$a.md" | sed 's/^model:[[:space:]]*//')
+  effort=$(grep -m1 '^reasoningEffort:' ".commandcode/agents/$a.md" | sed 's/^reasoningEffort:[[:space:]]*//')
+  case "$model" in
+    *"$want"*) ;;
+    *) bad "$a model is $model (expected $want)"; return;;
+  esac
+  if [ "$effort" != "$want_effort" ]; then
+    bad "$a effort is '${effort:-unset}' (expected $want_effort)"
   else
-    bad "$a missing"
+    ok "$a -> $model @ $effort"
   fi
-done
+}
+check_agent recon-agent  "deepseek-v4.1-flash" low
+check_agent triage-agent "deepseek-v4.1-flash" max
+check_agent report-agent "deepseek-v4.1-flash" high
+
+hdr "Safety rails (rate limit + replay)"
+if [ -x scripts/rate-limit.sh ]; then
+  ok "scripts/rate-limit.sh present"
+  t0=$(date +%s.%N)
+  BUGHUNT_STATE_DIR="$tmp/rate" ./scripts/rate-limit.sh acquire 5 >/dev/null 2>&1
+  BUGHUNT_STATE_DIR="$tmp/rate" ./scripts/rate-limit.sh acquire 5 >/dev/null 2>&1
+  t1=$(date +%s.%N)
+  waited=$(python3 -c "print(f'{float(\"$t1\")-float(\"$t0\"):.2f}')" 2>/dev/null || echo 0)
+  if python3 -c "import sys; sys.exit(0 if float('$waited') >= 0.9 else 1)" 2>/dev/null; then
+    ok "throttle enforced: 6th request waited ${waited}s (default cap 5/s)"
+  else
+    bad "throttle did not delay the second batch (${waited}s)"
+  fi
+else
+  bad "scripts/rate-limit.sh missing"
+fi
+if [ -x scripts/replay.sh ]; then ok "scripts/replay.sh present (throttled send + evidence)"; else bad "scripts/replay.sh missing"; fi
+
+hdr "Onboarding"
+if [ -f .commandcode/skills/hunt-onboarding/SKILL.md ]; then ok "hunt-onboarding skill file present"; else bad "hunt-onboarding skill missing"; fi
+if cmd skills list 2>/dev/null | grep -q 'hunt-onboarding'; then ok "hunt-onboarding loads in the skill catalog"; else bad "hunt-onboarding does not load (check frontmatter)"; fi
+if grep -q "scripts/new-target.sh" AGENTS.md; then ok "AGENTS.md carries the onboarding instruction"; else bad "AGENTS.md onboarding instruction missing"; fi
+if [ -f templates/PROGRAM_ONBOARDING.md ]; then ok "templates/PROGRAM_ONBOARDING.md present"; else bad "templates/PROGRAM_ONBOARDING.md missing"; fi
+if [ -f templates/TARGET.md ]; then ok "templates/TARGET.md present"; else bad "templates/TARGET.md missing"; fi
+
+hdr "Intel"
+if [ -f intel/INDEX.md ]; then
+  ok "intel/INDEX.md present ($(grep -c '^## ' intel/INDEX.md) class sections)"
+else
+  bad "intel/INDEX.md missing (run python3 scripts/build-intel-index.py)"
+fi
 
 hdr "Skills"
 installed=$(cmd skills list 2>/dev/null | grep -oE '[0-9]+ installed' | grep -oE '[0-9]+' || echo 0)
